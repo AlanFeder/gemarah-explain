@@ -50,7 +50,7 @@
                 </div>
                 <div id="detail-badge" class="inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-4 self-start"></div>
                 
-                <div class="space-y-4 overflow-y-auto pr-2">
+                <div class="space-y-4 overflow-y-auto pr-2 pb-4">
                     <div>
                         <h3 class="font-bold text-slate-700 uppercase text-xs tracking-wider">Starting Point</h3>
                         <p id="detail-start" class="text-lg leading-snug"></p>
@@ -64,6 +64,12 @@
                     <div>
                         <h3 class="font-bold text-slate-700 uppercase text-xs tracking-wider">The Mistake</h3>
                         <p id="detail-error" class="text-red-600 font-medium leading-snug"></p>
+                    </div>
+
+                     <!-- NEW SEFARIA LINKS SECTION -->
+                    <div id="detail-links-container">
+                         <h3 class="font-bold text-slate-700 uppercase text-xs tracking-wider mb-2">Sefaria Sources</h3>
+                         <div id="detail-links" class="flex flex-col gap-2"></div>
                     </div>
 
                     <div id="partial-year-box" class="hidden bg-amber-50 border border-amber-200 p-4 rounded mt-2">
@@ -117,7 +123,11 @@
                 ],
                 startDesc: "Year 1 of Nebuchadnezzar (Rise of Babylon)",
                 mistake: "Calculation Error (Partial Years). He counted incomplete years as full years, reaching '70' too early.",
-                showPartialYearInfo: true
+                showPartialYearInfo: true,
+                links: [
+                    { title: "Gemara: Megillah 11b", url: "https://www.sefaria.org/Megillah.11b.11?lang=bi&with=Rashi&lang2=en" },
+                    { title: "Story: Daniel Chapter 5", url: "https://www.sefaria.org/Daniel.5?lang=bi" }
+                ]
             },
             {
                 id: "daniel",
@@ -130,7 +140,12 @@
                     { label: "Babylonian Rule", years: 70 }
                 ],
                 startDesc: "Year 1 of Nebuchadnezzar",
-                mistake: "Conflation. He correctly calculated the 70 years of *Babylonian* rule, but mistakenly hoped the Temple would be rebuilt immediately. He didn't realize the Temple had a separate 70-year clock."
+                mistake: "Conflation. He correctly calculated the 70 years of *Babylonian* rule, but mistakenly hoped the Temple would be rebuilt immediately. He didn't realize the Temple had a separate 70-year clock.",
+                links: [
+                     { title: "Gemara: Megillah 12a", url: "https://www.sefaria.org/Megillah.12a.1?lang=bi&with=Rashi&lang2=en" },
+                     { title: "Verse: Daniel 9:2", url: "https://www.sefaria.org/Daniel.9.2?lang=bi" },
+                     { title: "Prophecy: Jeremiah 29:10", url: "https://www.sefaria.org/Jeremiah.29.10?lang=bi" }
+                ]
             },
             {
                 id: "achashverosh",
@@ -147,7 +162,11 @@
                     { label: "Achashverosh (Current)", years: 3 }
                 ],
                 startDesc: "Exile of Yechonya (Year 8)",
-                mistake: "Wrong Start Date. He started from the Exile of Yechonya (Year 8). He should have waited for the Destruction of the Temple (Year 19)."
+                mistake: "Wrong Start Date. He started from the Exile of Yechonya (Year 8). He should have waited for the Destruction of the Temple (Year 19).",
+                links: [
+                    { title: "Gemara: Megillah 11b", url: "https://www.sefaria.org/Megillah.11b.16?lang=bi&with=Rashi&lang2=en" },
+                    { title: "Story: Esther Chapter 1", url: "https://www.sefaria.org/Esther.1?lang=bi" }
+                ]
             },
             {
                 id: "sages",
@@ -166,7 +185,11 @@
                 ],
                 startDesc: "Destruction of the Temple (Year 19)",
                 mistake: "None! This is the correct calculation. The count is 70 years from Destruction to Rebuilding.",
-                isCorrect: true
+                isCorrect: true,
+                links: [
+                    { title: "Gemara: Megillah 11b (Rava's View)", url: "https://www.sefaria.org/Megillah.11b.20?lang=bi&with=Rashi&lang2=en" },
+                    { title: "Prophecy: Jeremiah 25:12", url: "https://www.sefaria.org/Jeremiah.25.12?lang=bi" }
+                ]
             }
         ];
 
@@ -361,6 +384,23 @@
             const total = data.segments.reduce((acc, curr) => acc + curr.years, 0);
             document.getElementById("detail-math").innerHTML = 
                 `${mathHTML}<div class="border-t-2 border-slate-300 mt-2 pt-2 flex justify-between font-bold text-slate-800"><span>TOTAL:</span> <span>${total} Years</span></div>`;
+
+            // SEFARIA LINKS Logic
+            const linksContainer = document.getElementById("detail-links");
+            const linksWrapper = document.getElementById("detail-links-container");
+            
+            if (data.links && data.links.length > 0) {
+                 const linksHTML = data.links.map(l => 
+                    `<a href="${l.url}" target="_blank" rel="noopener noreferrer" class="flex items-center p-2 bg-slate-50 border border-slate-200 rounded hover:bg-blue-50 hover:border-blue-300 transition-colors group">
+                        <span class="text-blue-600 mr-2 group-hover:scale-110 transition-transform">↗</span>
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">${l.title}</span>
+                    </a>`
+                 ).join("");
+                 linksContainer.innerHTML = linksHTML;
+                 linksWrapper.classList.remove("hidden");
+            } else {
+                 linksWrapper.classList.add("hidden");
+            }
 
             // Partial Year Box
             const partialBox = document.getElementById("partial-year-box");
