@@ -72,12 +72,13 @@
                          <div id="detail-links" class="flex flex-col gap-2"></div>
                     </div>
 
+                    <!-- Dynamic Partial Year Box -->
                     <div id="partial-year-box" class="hidden bg-amber-50 border border-amber-200 p-4 rounded mt-2">
                         <h3 class="font-bold text-amber-800 text-sm mb-1 flex items-center">
                             <span class="mr-2 text-lg">⚠️</span> Deep Dive: "Shnat Keta'in"
                         </h3>
-                        <p class="text-xs md:text-sm text-amber-900 leading-relaxed">
-                            Belshazzar counted the year Nebuchadnezzar died (Year 45) AND the year Evil Merodach took over (Year 1) as two separate years. In reality, they happened in the same 12-month span. He turned 1 year of history into 2 years of math.
+                        <p id="partial-year-text" class="text-xs md:text-sm text-amber-900 leading-relaxed">
+                            <!-- Content injected via JS -->
                         </p>
                     </div>
                 </div>
@@ -123,7 +124,7 @@
                 ],
                 startDesc: "Year 1 of Nebuchadnezzar (Rise of Babylon)",
                 mistake: "Calculation Error (Partial Years). He counted incomplete years as full years, reaching '70' too early.",
-                showPartialYearInfo: true,
+                partialYearText: "Belshazzar counted the year Nebuchadnezzar died (Year 45) AND the year Evil Merodach took over (Year 1) as two separate years. In reality, they happened in the same 12-month span. He turned 1 year of history into 2 years of math.",
                 links: [
                     { title: "Gemara: Megillah 11b", url: "https://www.sefaria.org/Megillah.11b.11?lang=bi&with=Rashi&lang2=en" },
                     { title: "Story: Daniel Chapter 5", url: "https://www.sefaria.org/Daniel.5?lang=bi" }
@@ -141,6 +142,7 @@
                 ],
                 startDesc: "Year 1 of Nebuchadnezzar",
                 mistake: "Conflation. He correctly calculated the 70 years of *Babylonian* rule, but mistakenly hoped the Temple would be rebuilt immediately. He didn't realize the Temple had a separate 70-year clock.",
+                partialYearText: null,
                 links: [
                      { title: "Gemara: Megillah 12a", url: "https://www.sefaria.org/Megillah.12a.1?lang=bi&with=Rashi&lang2=en" },
                      { title: "Verse: Daniel 9:2", url: "https://www.sefaria.org/Daniel.9.2?lang=bi" },
@@ -163,6 +165,7 @@
                 ],
                 startDesc: "Exile of Yechonya (Year 8)",
                 mistake: "Wrong Start Date. He started from the Exile of Yechonya (Year 8). He should have waited for the Destruction of the Temple (Year 19).",
+                partialYearText: null,
                 links: [
                     { title: "Gemara: Megillah 11b", url: "https://www.sefaria.org/Megillah.11b.16?lang=bi&with=Rashi&lang2=en" },
                     { title: "Story: Esther Chapter 1", url: "https://www.sefaria.org/Esther.1?lang=bi" }
@@ -186,6 +189,7 @@
                 startDesc: "Destruction of the Temple (Year 19)",
                 mistake: "None! This is the correct calculation. The count is 70 years from Destruction to Rebuilding.",
                 isCorrect: true,
+                partialYearText: "<strong>Why does the math equal 72?</strong> <br>26+23+2+5+14+2 = 72. Rashi explains that the calculation spans from the partial year of destruction (Year 19) to the partial year of rebuilding (Darius Year 2). While it touches 72 <em>calendar years</em>, the actual <em>duration</em> of desolation is exactly 70 years because the first and last years are incomplete.",
                 links: [
                     { title: "Gemara: Megillah 11b (Rava's View)", url: "https://www.sefaria.org/Megillah.11b.20?lang=bi&with=Rashi&lang2=en" },
                     { title: "Prophecy: Jeremiah 25:12", url: "https://www.sefaria.org/Jeremiah.25.12?lang=bi" }
@@ -404,7 +408,10 @@
 
             // Partial Year Box
             const partialBox = document.getElementById("partial-year-box");
-            if (data.showPartialYearInfo) {
+            const partialText = document.getElementById("partial-year-text");
+            
+            if (data.partialYearText) {
+                partialText.innerHTML = data.partialYearText;
                 partialBox.classList.remove("hidden");
             } else {
                 partialBox.classList.add("hidden");
