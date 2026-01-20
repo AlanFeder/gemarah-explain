@@ -4,117 +4,196 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Megillah 11b: The 70 Years Calculator</title>
-    <!-- Tailwind CSS for styling -->
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- D3.js for the visualization -->
+    
+    <!-- D3.js -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        // Custom palette matching the "Nano Banana" aesthetic
+                        paper: '#f8f9fa',
+                        ink: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .timeline-bar { cursor: pointer; transition: opacity 0.2s; }
-        .timeline-bar:hover { opacity: 0.8; }
-        .axis text { font-size: 12px; }
-        .event-line { stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 4; }
-        .tooltip { pointer-events: none; }
-        /* Custom scrollbar for better look */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        body { background-color: #f0f2f5; background-image: radial-gradient(#e2e8f0 1px, transparent 1px); background-size: 24px 24px; }
+        .timeline-bar { cursor: pointer; transition: filter 0.2s; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .timeline-bar:hover { filter: drop-shadow(0 8px 12px rgba(0,0,0,0.2)) brightness(1.05); }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Glass effect class */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 h-screen flex flex-col overflow-hidden">
+<body class="text-ink h-screen flex flex-col overflow-hidden selection:bg-blue-200 selection:text-blue-900">
 
     <!-- Header -->
-    <header class="bg-slate-900 text-white p-4 md:p-6 shadow-lg flex-shrink-0 z-20">
-        <h1 class="text-2xl md:text-3xl font-bold">The Mystery of the 70 Years</h1>
-        <p class="text-slate-300 mt-1 text-sm md:text-base">Interactive visualization of Gemara Megillah 11b-12a</p>
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 p-4 md:px-8 shadow-sm flex-shrink-0 z-30 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-serif font-black tracking-tight text-slate-900">The Mystery of the 70 Years</h1>
+            <p class="text-slate-500 mt-1 text-sm font-medium tracking-wide">GEMARA MEGILLAH 11b-12a</p>
+        </div>
+        <div class="hidden md:block text-xs font-mono text-slate-400">
+            v2.0 • Interactive Timeline
+        </div>
     </header>
 
     <!-- Main Content -->
-    <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
+    <div class="flex flex-col md:flex-row flex-1 overflow-hidden relative">
         
-        <!-- Sidebar: Info Panel (Mobile: Top, Desktop: Left) -->
-        <div id="info-panel" class="w-full md:w-1/3 bg-white p-6 border-b md:border-b-0 md:border-r border-slate-200 overflow-y-auto shadow-xl z-10 flex-shrink-0 h-1/3 md:h-full">
-            <div id="intro-text" class="mb-6">
-                <h2 class="text-xl font-bold text-blue-600 mb-2">Instructions</h2>
-                <p class="text-sm text-slate-600">Click on any of the colored timeline bars to see the detailed calculation, the specific kings they counted, and exactly where they made their mistake.</p>
-                <div class="mt-4 p-3 bg-blue-50 text-blue-800 text-xs rounded border border-blue-100">
-                    <strong>Tip:</strong> The Green bar represents the Sages' correct calculation.
-                </div>
-            </div>
-            
-            <div id="details-container" class="hidden h-full flex flex-col">
-                <div class="flex items-center justify-between mb-2">
-                    <h2 id="detail-title" class="text-2xl font-bold"></h2>
-                    <button id="back-btn" class="md:hidden text-xs bg-slate-200 px-2 py-1 rounded">Back</button>
-                </div>
-                <div id="detail-badge" class="inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-4 self-start"></div>
+        <!-- Sidebar: Info Panel (Floating Card Style) -->
+        <div id="info-panel" class="
+            absolute md:relative z-20 
+            w-full md:w-[400px] md:max-w-md 
+            h-[40%] md:h-full 
+            bottom-0 md:top-0 md:left-0 
+            flex flex-col
+            shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:shadow-[10px_0_40px_-15px_rgba(0,0,0,0.1)]
+            glass-panel transition-all duration-300 transform translate-y-0
+        ">
+            <!-- Panel Content -->
+            <div class="p-6 md:p-8 overflow-y-auto h-full">
                 
-                <div class="space-y-4 overflow-y-auto pr-2 pb-4">
-                    <div>
-                        <h3 class="font-bold text-slate-700 uppercase text-xs tracking-wider">Starting Point</h3>
-                        <p id="detail-start" class="text-lg leading-snug"></p>
+                <!-- Intro State -->
+                <div id="intro-text" class="h-full flex flex-col justify-center">
+                    <div class="mb-6">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4 text-2xl">
+                            👋
+                        </div>
+                        <h2 class="text-2xl font-serif font-bold text-slate-800 mb-3">How to use this chart</h2>
+                        <p class="text-slate-600 leading-relaxed">
+                            The Gemara discusses four different ways people calculated the prophecy of "70 Years."
+                        </p>
+                        <p class="text-slate-600 leading-relaxed mt-2">
+                            Click on any of the <span class="font-bold text-slate-800">colored bars</span> to reveal their logic, their math, and their fatal mistakes.
+                        </p>
                     </div>
                     
-                    <div>
-                        <h3 class="font-bold text-slate-700 uppercase text-xs tracking-wider">The Math</h3>
-                        <div id="detail-math" class="bg-slate-100 p-3 rounded font-mono text-sm border-l-4 border-slate-400 mt-1"></div>
+                    <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+                        <div class="flex items-start">
+                            <span class="text-emerald-600 mt-0.5 mr-2">✅</span>
+                            <div>
+                                <strong class="text-emerald-900 block text-sm mb-1">Spoiler Alert</strong>
+                                <p class="text-xs text-emerald-800 leading-relaxed">
+                                    The Green bar (The Sages) is the only calculation accepted as historically and religiously correct.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Details State -->
+                <div id="details-container" class="hidden flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-4 sticky top-0 bg-white/0 z-10">
+                        <button id="back-btn" class="text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 flex items-center transition-colors">
+                            ← Back to Menu
+                        </button>
                     </div>
 
-                    <div>
-                        <h3 class="font-bold text-slate-700 uppercase text-xs tracking-wider">The Mistake / Approach</h3>
-                        <p id="detail-error" class="text-slate-800 font-medium leading-snug"></p>
-                    </div>
+                    <div class="animate-fade-in-up">
+                        <h2 id="detail-title" class="text-3xl font-serif font-bold text-slate-900 mb-2 leading-tight"></h2>
+                        <div id="detail-badge" class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white mb-6 shadow-sm"></div>
+                        
+                        <div class="space-y-6">
+                            <!-- Start Point -->
+                            <div class="relative pl-4 border-l-2 border-slate-200">
+                                <h3 class="font-sans font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-1">Starting Event</h3>
+                                <p id="detail-start" class="text-lg font-medium text-slate-800"></p>
+                            </div>
+                            
+                            <!-- The Math -->
+                            <div>
+                                <h3 class="font-sans font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-2">The Calculation</h3>
+                                <div id="detail-math" class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm text-sm font-mono text-slate-600"></div>
+                            </div>
 
-                     <!-- SEFARIA LINKS SECTION -->
-                    <div id="detail-links-container">
-                         <h3 class="font-bold text-slate-700 uppercase text-xs tracking-wider mb-2">Sefaria Sources</h3>
-                         <div id="detail-links" class="flex flex-col gap-2"></div>
-                    </div>
+                            <!-- The Mistake -->
+                            <div>
+                                <h3 class="font-sans font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-2">The Verdict</h3>
+                                <p id="detail-error" class="text-base text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100"></p>
+                            </div>
 
-                    <!-- Dynamic Partial Year Box -->
-                    <div id="partial-year-box" class="hidden bg-amber-50 border border-amber-200 p-4 rounded mt-2">
-                        <h3 class="font-bold text-amber-800 text-sm mb-1 flex items-center">
-                            <span class="mr-2 text-lg">⚠️</span> Deep Dive: "Shnat Keta'in"
-                        </h3>
-                        <p id="partial-year-text" class="text-xs md:text-sm text-amber-900 leading-relaxed">
-                            <!-- Content injected via JS -->
-                        </p>
+                            <!-- Sefaria Links -->
+                            <div id="detail-links-container" class="hidden">
+                                <h3 class="font-sans font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-2">Sources</h3>
+                                <div id="detail-links" class="grid grid-cols-1 gap-2"></div>
+                            </div>
+
+                            <!-- Partial Year Box -->
+                            <div id="partial-year-box" class="hidden bg-amber-50 border border-amber-100 p-5 rounded-xl shadow-sm">
+                                <h3 class="font-bold text-amber-900 text-xs uppercase tracking-wider mb-2 flex items-center">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-2"></span> Deep Dive: "Shnat Keta'in"
+                                </h3>
+                                <p id="partial-year-text" class="text-sm text-amber-900/80 leading-relaxed"></p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Visualization Area -->
-        <div class="w-full md:w-2/3 relative bg-slate-50 flex-1 overflow-hidden flex flex-col" id="viz-wrapper">
-            <div class="absolute top-4 right-4 bg-white/90 p-2 rounded text-xs text-slate-500 shadow z-10 pointer-events-none">
-                Scroll/Pinch to zoom • Drag to pan
+        <div class="w-full h-[60%] md:h-full relative flex-1 overflow-hidden" id="viz-wrapper">
+             <!-- Hint Overlay -->
+            <div class="absolute top-6 right-6 z-10 pointer-events-none opacity-50 md:opacity-100">
+                <div class="bg-white/80 backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-slate-400 shadow-sm border border-slate-100">
+                    Scroll to Zoom • Drag to Pan
+                </div>
             </div>
+            
             <div id="viz-container" class="w-full h-full"></div>
         </div>
     </div>
 
     <script>
         // --- DATA CONFIGURATION ---
-        
-        // Define key historical events (The "Real" timeline anchors)
-        // Years are relative to Nebuchadnezzar's Year 1
         const events = [
             { year: 0, label: "Nebuchadnezzar Begins", type: "start" },
             { year: 8, label: "Exile of Yechonya", type: "minor" },
-            { year: 19, label: "Destruction of Temple", type: "major" }, // The True Start
+            { year: 19, label: "Destruction of Temple", type: "major" },
             { year: 70, label: "Cyrus Decree / Belshazzar Dies", type: "redemption_fake" },
             { year: 78, label: "Achashverosh's Party", type: "party" },
             { year: 89, label: "Temple Rebuilt (Darius II)", type: "redemption_true" }
         ];
 
-        // Define the 4 Opinions (Malbim removed)
         const timelines = [
             {
                 id: "belshazzar",
                 name: "Belshazzar",
                 role: "King of Babylon",
-                color: "#ef4444", // Red
+                // Gradient Colors
+                colorStart: "#ef4444", 
+                colorEnd: "#b91c1c",
+                badgeClass: "bg-gradient-to-r from-red-500 to-red-600",
                 startYear: 0,
                 endYear: 70,
                 segments: [
@@ -122,64 +201,72 @@
                     { label: "Evil Merodach", years: 23 },
                     { label: "Belshazzar", years: 2 }
                 ],
-                startDesc: "Year 1 of Nebuchadnezzar (Rise of Babylon)",
-                mistake: "Calculation Error (Partial Years). He counted incomplete years as full years, reaching '70' too early.",
-                partialYearText: "Belshazzar counted the year Nebuchadnezzar died (Year 45) AND the year Evil Merodach took over (Year 1) as two separate years. In reality, they happened in the same 12-month span. He turned 1 year of history into 2 years of math.",
+                startDesc: "Year 1 of Nebuchadnezzar",
+                mistake: "<strong>Calculation Error (Double Counting).</strong> He treated the transition years between kings as two separate years (one for the outgoing king, one for the incoming). He effectively turned 1 year of history into 2 years of math.",
+                partialYearText: "Belshazzar counted the year Nebuchadnezzar died (Year 45) AND the year Evil Merodach took over (Year 1) as two separate years. In reality, they happened in the same 12-month span.",
                 links: [
-                    { title: "Rashi on Megillah 11b (s.v. Minyan)", url: "https://www.sefaria.org/Megillah.11b.12?lang=bi&with=Rashi&lang2=en" },
-                    { title: "Story: Daniel Chapter 5", url: "https://www.sefaria.org/Daniel.5?lang=bi" }
-                ]
+                    { title: "Rashi on Megillah 11b", url: "https://www.sefaria.org/Megillah.11b.12?lang=bi&with=Rashi&lang2=en" },
+                    { title: "Daniel Chapter 5", url: "https://www.sefaria.org/Daniel.5?lang=bi" }
+                ],
+                isCorrect: false
             },
             {
                 id: "daniel",
                 name: "Daniel",
                 role: "The Prophet",
-                color: "#3b82f6", // Blue
+                colorStart: "#3b82f6",
+                colorEnd: "#1d4ed8",
+                badgeClass: "bg-gradient-to-r from-blue-500 to-blue-600",
                 startYear: 0,
                 endYear: 70,
                 segments: [
                     { label: "Babylonian Rule", years: 70 }
                 ],
                 startDesc: "Year 1 of Nebuchadnezzar",
-                mistake: "Conflation. He correctly calculated the 70 years of *Babylonian* rule, but mistakenly hoped the Temple would be rebuilt immediately. He didn't realize the Temple had a separate 70-year clock.",
+                mistake: "<strong>Theological Error.</strong> He correctly calculated the 70 years of <em>Babylonian</em> domination. However, he mistakenly assumed the Temple's rebuilding would happen immediately upon Babylon's fall. He didn't realize the Temple had its own, separate 70-year clock.",
                 partialYearText: null,
                 links: [
-                     { title: "Rashi on Megillah 12a (s.v. Tahu)", url: "https://www.sefaria.org/Megillah.12a.3?lang=bi&with=Rashi&lang2=en" },
-                     { title: "Verse: Daniel 9:2", url: "https://www.sefaria.org/Daniel.9.2?lang=bi" },
-                     { title: "Prophecy: Jeremiah 29:10", url: "https://www.sefaria.org/Jeremiah.29.10?lang=bi" }
-                ]
+                     { title: "Rashi on Megillah 12a", url: "https://www.sefaria.org/Megillah.12a.3?lang=bi&with=Rashi&lang2=en" },
+                     { title: "Daniel 9:2", url: "https://www.sefaria.org/Daniel.9.2?lang=bi" }
+                ],
+                isCorrect: false
             },
             {
                 id: "achashverosh",
                 name: "Achashverosh",
                 role: "King of Persia",
-                color: "#f97316", // Orange
+                colorStart: "#f97316",
+                colorEnd: "#c2410c",
+                badgeClass: "bg-gradient-to-r from-orange-500 to-orange-600",
                 startYear: 8,
                 endYear: 78,
                 segments: [
-                    { label: "Nebuchadnezzar (Remainder)", years: 37 }, // 45 - 8
+                    { label: "Nebuchadnezzar", years: 37 },
                     { label: "Evil Merodach", years: 23 },
                     { label: "Belshazzar", years: 2 },
                     { label: "Darius & Cyrus", years: 5 },
-                    { label: "Achashverosh (Current)", years: 3 }
+                    { label: "Achashverosh", years: 3 }
                 ],
                 startDesc: "Exile of Yechonya (Year 8)",
-                mistake: "Wrong Start Date. He started from the Exile of Yechonya (Year 8). He should have waited for the Destruction of the Temple (Year 19).",
+                mistake: "<strong>Historical Error.</strong> He started counting from the Exile of Yechonya (8 years into Nebuchadnezzar's reign). The prophecy for the \"Ruins of Jerusalem\" actually began 11 years later, when the Temple was destroyed.",
                 partialYearText: null,
                 links: [
-                    { title: "Rashi on Megillah 11b (s.v. Savar)", url: "https://www.sefaria.org/Megillah.11b.16?lang=bi&with=Rashi&lang2=en" },
-                    { title: "Story: Esther Chapter 1", url: "https://www.sefaria.org/Esther.1?lang=bi" }
-                ]
+                    { title: "Rashi on Megillah 11b", url: "https://www.sefaria.org/Megillah.11b.16?lang=bi&with=Rashi&lang2=en" },
+                    { title: "Esther Chapter 1", url: "https://www.sefaria.org/Esther.1?lang=bi" }
+                ],
+                isCorrect: false
             },
             {
                 id: "sages",
-                name: "The Sages (True Calculation)",
-                role: "Halacha / Reality",
-                color: "#22c55e", // Green
+                name: "The Sages",
+                role: "The True Calculation",
+                colorStart: "#10b981",
+                colorEnd: "#047857",
+                badgeClass: "bg-gradient-to-r from-emerald-500 to-emerald-700",
                 startYear: 19,
                 endYear: 89,
                 segments: [
-                    { label: "Nebuchadnezzar (Remainder)", years: 26 }, // 45 - 19
+                    { label: "Nebuchadnezzar", years: 26 },
                     { label: "Evil Merodach", years: 23 },
                     { label: "Belshazzar", years: 2 },
                     { label: "Darius & Cyrus", years: 5 },
@@ -187,147 +274,197 @@
                     { label: "Darius II", years: 2 }
                 ],
                 startDesc: "Destruction of the Temple (Year 19)",
-                mistake: "Correct! The 70 years of desolation began at the Destruction and ended with the Rebuilding.",
+                mistake: "<strong>Success.</strong> The 70 years of desolation began exactly at the Destruction and ended exactly at the Rebuilding in the days of Darius II.",
                 isCorrect: true,
-                partialYearText: "<strong>Why does the math equal 72?</strong> <br>26+23+2+5+14+2 = 72. Rashi explains that the calculation spans from the partial year of destruction (Year 19) to the partial year of rebuilding (Darius Year 2). While it touches 72 <em>calendar years</em>, the actual <em>duration</em> of desolation is exactly 70 years because the first and last years are incomplete.",
+                partialYearText: "<strong>Why does the math equal 72?</strong> <br>26+23+2+5+14+2 = 72. Rashi explains that the calculation spans from the partial year of destruction (Year 19) to the partial year of rebuilding (Darius Year 2). While it touches 72 <em>calendar years</em>, the actual <em>duration</em> is exactly 70 years because the first and last years are incomplete.",
                 links: [
-                    { title: "Rashi on Megillah 11b (s.v. B'shnat)", url: "https://www.sefaria.org/Megillah.11b.20?lang=bi&with=Rashi&lang2=en" },
-                    { title: "Prophecy: Jeremiah 25:12", url: "https://www.sefaria.org/Jeremiah.25.12?lang=bi" }
-                ]
+                    { title: "Rashi on Megillah 11b", url: "https://www.sefaria.org/Megillah.11b.20?lang=bi&with=Rashi&lang2=en" },
+                    { title: "Jeremiah 25:12", url: "https://www.sefaria.org/Jeremiah.25.12?lang=bi" }
+                ],
+                isCorrect: true
             }
         ];
 
-        // --- D3 SETUP ---
-        // We use a resize observer to handle window resizing dynamically
-        
+        // --- D3 LOGIC ---
         function initChart() {
             const container = document.getElementById('viz-container');
-            // clear previous
             container.innerHTML = '';
             
             const width = container.clientWidth;
             const height = container.clientHeight;
-            const margin = { top: 60, right: 60, bottom: 40, left: 20 };
+            const margin = { top: 80, right: 100, bottom: 60, left: 40 };
 
             const svg = d3.select("#viz-container")
                 .append("svg")
                 .attr("width", width)
                 .attr("height", height)
-                .attr("viewBox", `0 0 ${width} ${height}`);
+                .attr("viewBox", `0 0 ${width} ${height}`)
+                .style("font-family", "'Inter', sans-serif");
 
-            // X Scale (Years -5 to 100 to give breathing room)
+            // --- DEFINITIONS (Gradients & Shadows) ---
+            const defs = svg.append("defs");
+            
+            // Drop Shadow Filter
+            const filter = defs.append("filter")
+                .attr("id", "drop-shadow")
+                .attr("height", "130%");
+            filter.append("feGaussianBlur")
+                .attr("in", "SourceAlpha")
+                .attr("stdDeviation", 3)
+                .attr("result", "blur");
+            filter.append("feOffset")
+                .attr("in", "blur")
+                .attr("dx", 2)
+                .attr("dy", 3)
+                .attr("result", "offsetBlur");
+            filter.append("feComponentTransfer")
+                .append("feFuncA")
+                .attr("type", "linear")
+                .attr("slope", 0.3); // Opacity
+            const feMerge = filter.append("feMerge");
+            feMerge.append("feMergeNode").attr("in", "offsetBlur");
+            feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+            // Gradients for each timeline
+            timelines.forEach(t => {
+                const grad = defs.append("linearGradient")
+                    .attr("id", `grad-${t.id}`)
+                    .attr("x1", "0%")
+                    .attr("y1", "0%")
+                    .attr("x2", "100%")
+                    .attr("y2", "0%");
+                grad.append("stop").attr("offset", "0%").style("stop-color", t.colorStart);
+                grad.append("stop").attr("offset", "100%").style("stop-color", t.colorEnd);
+            });
+
+            // Scale
             const x = d3.scaleLinear()
                 .domain([-2, 95])
                 .range([margin.left, width - margin.right]);
 
-            // Y Scale (4 Tracks)
             const y = d3.scaleBand()
                 .domain(timelines.map(d => d.id))
                 .range([margin.top, height - margin.bottom])
-                .padding(0.4);
+                .padding(0.5);
 
-            // Group for content
             const g = svg.append("g");
             
-            // Axis Group (stays fixed logically, but scales)
-            const xAxis = d3.axisBottom(x).tickFormat(d => `Yr ${d}`);
+            // Grid Lines (Vertical)
+            const xAxis = d3.axisBottom(x).tickFormat(d => d).ticks(20).tickSize(-(height - margin.top - margin.bottom));
             const axisGroup = svg.append("g")
+                .attr("class", "grid-lines")
                 .attr("transform", `translate(0, ${height - margin.bottom})`)
-                .call(xAxis);
+                .call(xAxis)
+                .call(g => g.select(".domain").remove())
+                .call(g => g.selectAll(".tick line").attr("stroke", "#e2e8f0").attr("stroke-dasharray", "2,2"))
+                .call(g => g.selectAll(".tick text").attr("fill", "#94a3b8").attr("dy", 10));
 
-            // Zoom Behavior
+
+            // Zoom
             const zoom = d3.zoom()
-                .scaleExtent([1, 5])
-                .translateExtent([[-100, 0], [width + 100, height]])
+                .scaleExtent([1, 4])
+                .translateExtent([[-100, 0], [width + 200, height]])
                 .on("zoom", (event) => {
                     const newX = event.transform.rescaleX(x);
                     
-                    // Update bars
-                    g.selectAll("rect").attr("x", d => newX(d.x)).attr("width", d => newX(d.x + d.width) - newX(d.x));
+                    // Update content
+                    g.selectAll("rect.bar-segment").attr("x", d => newX(d.x)).attr("width", d => newX(d.x + d.width) - newX(d.x));
+                    g.selectAll("text.bar-label").attr("x", d => newX(d.x + d.width/2)).style("opacity", d => (newX(d.x + d.width) - newX(d.x)) > 40 ? 1 : 0);
+                    g.selectAll("text.name-label").attr("x", d => newX(d.x) - 15);
+                    g.selectAll("line.event-line").attr("x1", d => newX(d.year)).attr("x2", d => newX(d.year));
+                    g.selectAll("text.event-label").attr("x", d => newX(d.year));
+                    g.selectAll(".bar-marker-start").attr("cx", d => newX(d.x));
+                    g.selectAll(".bar-marker-end").attr("cx", d => newX(d.x + d.totalWidth));
+                    g.selectAll(".end-label").attr("x", d => newX(d.x + d.totalWidth) + 15);
                     
-                    // Update text labels inside bars
-                    g.selectAll(".bar-label").attr("x", d => newX(d.x + d.width/2));
-                    
-                    // Update name labels
-                    g.selectAll(".name-label").attr("x", d => newX(d.x) - 10);
-                    
-                    // Update event lines
-                    g.selectAll(".event-line").attr("x1", d => newX(d.year)).attr("x2", d => newX(d.year));
-                    g.selectAll(".event-label").attr("x", d => newX(d.year));
-                    
-                    // Update Axis
                     axisGroup.call(xAxis.scale(newX));
+                    
+                    // Keep grid styling
+                    axisGroup.call(g => g.select(".domain").remove())
+                             .call(g => g.selectAll(".tick line").attr("stroke", "#e2e8f0").attr("stroke-dasharray", "2,2"));
                 });
 
             svg.call(zoom);
 
-            // --- DRAWING ---
+            // --- DRAW LAYERS ---
 
-            // 1. Event Lines (Vertical dashed lines)
-            g.selectAll(".event-line")
+            // 1. Events (Back Layer)
+            const eventGroup = g.append("g");
+            
+            eventGroup.selectAll(".event-line")
                 .data(events)
                 .enter()
                 .append("line")
                 .attr("class", "event-line")
                 .attr("x1", d => x(d.year))
                 .attr("x2", d => x(d.year))
-                .attr("y1", margin.top - 20)
+                .attr("y1", margin.top - 30)
                 .attr("y2", height - margin.bottom)
-                .attr("stroke", d => d.type === "major" || d.type === "redemption_true" ? "#334155" : "#cbd5e1")
-                .attr("stroke-width", d => d.type === "major" || d.type === "redemption_true" ? 2 : 1)
-                .attr("stroke-dasharray", "4,4");
+                .attr("stroke", d => d.type.includes("redemption_true") ? "#10b981" : "#cbd5e1")
+                .attr("stroke-width", d => d.type === "major" || d.type.includes("redemption") ? 2 : 1)
+                .attr("stroke-dasharray", d => d.type === "major" ? "0" : "4,4");
 
-            // Event Labels
-            g.selectAll(".event-label")
+            eventGroup.selectAll(".event-label")
                 .data(events)
                 .enter()
                 .append("text")
                 .attr("class", "event-label")
                 .attr("x", d => x(d.year))
-                .attr("y", margin.top - 25)
+                .attr("y", margin.top - 40)
                 .text(d => d.label)
                 .attr("text-anchor", "start")
                 .attr("font-size", "10px")
+                .attr("font-weight", "600")
                 .attr("fill", "#64748b")
-                .style("writing-mode", "vertical-rl") // Vertical text for better fit
-                .style("text-orientation", "mixed");
+                .attr("transform", d => `rotate(-45, ${x(d.year)}, ${margin.top - 40})`);
 
-
-            // 2. Timeline Bars
+            // 2. Timelines
             timelines.forEach(t => {
                 const trackY = y(t.id);
-                const trackHeight = y.bandwidth();
+                const trackHeight = y.bandwidth(); // Thicker bars
                 
-                // Group for this timeline
                 const trackGroup = g.append("g")
                     .attr("class", "timeline-group")
                     .style("cursor", "pointer")
                     .on("click", () => showDetails(t));
 
-                // Draw segments
                 let runningYear = t.startYear;
-                
+                let totalWidth = t.endYear - t.startYear;
+
+                // Name Label
+                trackGroup.append("text")
+                    .datum({ x: t.startYear })
+                    .attr("class", "name-label")
+                    .attr("x", x(t.startYear) - 15)
+                    .attr("y", trackY + trackHeight/2 + 5)
+                    .text(t.name)
+                    .attr("text-anchor", "end")
+                    .attr("font-family", "'Playfair Display', serif")
+                    .attr("font-weight", "900")
+                    .attr("fill", t.colorEnd)
+                    .attr("font-size", "16px");
+
+                // Draw Segments
                 t.segments.forEach((seg, i) => {
                     const segStart = runningYear;
-                    const segEnd = runningYear + seg.years;
-                    
-                    // Store data for zoom updates
                     const rectData = { x: segStart, width: seg.years };
-
+                    
+                    // Bar Segment
                     trackGroup.append("rect")
                         .datum(rectData)
+                        .attr("class", "bar-segment")
                         .attr("x", x(segStart))
                         .attr("y", trackY)
-                        .attr("width", x(segEnd) - x(segStart))
+                        .attr("width", x(segStart + seg.years) - x(segStart))
                         .attr("height", trackHeight)
-                        .attr("fill", t.color)
+                        .attr("fill", `url(#grad-${t.id})`)
+                        .attr("opacity", i % 2 === 0 ? 1 : 0.85) // Subtle banding
                         .attr("stroke", "white")
-                        .attr("stroke-width", 1)
-                        .attr("rx", 4)
-                        .attr("opacity", i % 2 === 0 ? 1 : 0.85);
+                        .attr("stroke-width", 0.5)
+                        .attr("filter", "url(#drop-shadow)");
 
-                    // Segment Label (if wide enough)
-                    if (seg.years > 5) {
+                    // Years Label inside bar
+                    if (seg.years > 4) {
                          trackGroup.append("text")
                             .datum(rectData)
                             .attr("class", "bar-label pointer-events-none")
@@ -336,71 +473,89 @@
                             .text(seg.years)
                             .attr("text-anchor", "middle")
                             .attr("fill", "white")
+                            .attr("font-weight", "600")
                             .attr("font-size", "11px")
-                            .attr("font-weight", "bold");
+                            .style("text-shadow", "0 1px 2px rgba(0,0,0,0.3)");
                     }
-                    
                     runningYear += seg.years;
                 });
 
-                // Name Label
+                // Start Marker (Circle)
+                trackGroup.append("circle")
+                    .datum({ x: t.startYear })
+                    .attr("class", "bar-marker-start")
+                    .attr("cx", x(t.startYear))
+                    .attr("cy", trackY + trackHeight/2)
+                    .attr("r", 4)
+                    .attr("fill", "white")
+                    .attr("stroke", t.colorStart)
+                    .attr("stroke-width", 2);
+
+                // End Marker (Circle)
+                trackGroup.append("circle")
+                    .datum({ x: t.startYear, totalWidth: totalWidth })
+                    .attr("class", "bar-marker-end")
+                    .attr("cx", x(t.endYear))
+                    .attr("cy", trackY + trackHeight/2)
+                    .attr("r", 6)
+                    .attr("fill", "white")
+                    .attr("stroke", t.colorEnd)
+                    .attr("stroke-width", 3);
+
+                // End Label (Total Years)
                 trackGroup.append("text")
-                    .datum({ x: t.startYear, width: 0 })
-                    .attr("class", "name-label font-sans")
-                    .attr("x", x(t.startYear) - 10)
+                    .datum({ x: t.startYear, totalWidth: totalWidth })
+                    .attr("class", "end-label")
+                    .attr("x", x(t.endYear) + 15)
                     .attr("y", trackY + trackHeight/2 + 5)
-                    .text(t.name)
-                    .attr("text-anchor", "end")
+                    .text("70 Yrs") // Everyone thought they hit 70 (or 72 for Sages)
+                    .attr("font-size", "11px")
                     .attr("font-weight", "bold")
-                    .attr("fill", t.color)
-                    .attr("font-size", "14px");
+                    .attr("fill", t.colorEnd);
+
             });
         }
 
         // --- INTERACTIVITY ---
-
         function showDetails(data) {
             const panel = document.getElementById("details-container");
             const intro = document.getElementById("intro-text");
             
-            // Hide intro, show details
+            // Transitions
             intro.classList.add("hidden");
             panel.classList.remove("hidden");
 
-            // Populate Text
+            // Populate Content
             document.getElementById("detail-title").innerText = data.name;
             document.getElementById("detail-start").innerText = data.startDesc;
-            document.getElementById("detail-error").innerHTML = data.mistake; // Use innerHTML for formatting
+            document.getElementById("detail-error").innerHTML = data.mistake;
             
-            // Badge
+            // Badge Styling
             const badge = document.getElementById("detail-badge");
-            badge.innerText = data.isCorrect ? "CORRECT / ACCEPTED" : "INCORRECT CALCULATION";
-            badge.className = `inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-4 ${data.isCorrect ? 'bg-green-600' : 'bg-red-500'}`;
-            // Override for Malbim color
-            if(data.id === 'malbim') badge.className = `inline-block px-3 py-1 rounded-full text-xs font-bold text-white mb-4 bg-purple-600`;
-
+            badge.innerText = data.isCorrect ? "Historical Truth" : "Calculation Error";
+            badge.className = `inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white mb-6 shadow-sm ${data.badgeClass}`;
 
             // Math Breakdown
             const mathHTML = data.segments.map(s => 
-                `<div class="flex justify-between border-b border-slate-200 last:border-0 py-1">
-                    <span class="text-slate-600">${s.label}</span> 
-                    <span class="font-bold">${s.years}</span>
+                `<div class="flex justify-between border-b border-slate-100 last:border-0 py-2">
+                    <span class="text-slate-500 font-medium">${s.label}</span> 
+                    <span class="font-bold text-slate-700">${s.years} <span class="text-[10px] text-slate-400 font-normal">YRS</span></span>
                 </div>`
             ).join("");
             
             const total = data.segments.reduce((acc, curr) => acc + curr.years, 0);
             document.getElementById("detail-math").innerHTML = 
-                `${mathHTML}<div class="border-t-2 border-slate-300 mt-2 pt-2 flex justify-between font-bold text-slate-800"><span>TOTAL:</span> <span>${total} Years</span></div>`;
+                `${mathHTML}<div class="border-t border-slate-200 mt-2 pt-2 flex justify-between font-bold text-slate-900"><span>TOTAL</span> <span>${total} Years</span></div>`;
 
-            // SEFARIA LINKS Logic
+            // Sefaria Links
             const linksContainer = document.getElementById("detail-links");
             const linksWrapper = document.getElementById("detail-links-container");
             
             if (data.links && data.links.length > 0) {
                  const linksHTML = data.links.map(l => 
-                    `<a href="${l.url}" target="_blank" rel="noopener noreferrer" class="flex items-center p-2 bg-slate-50 border border-slate-200 rounded hover:bg-blue-50 hover:border-blue-300 transition-colors group">
-                        <span class="text-blue-600 mr-2 group-hover:scale-110 transition-transform">↗</span>
+                    `<a href="${l.url}" target="_blank" rel="noopener noreferrer" class="group flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all">
                         <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">${l.title}</span>
+                        <span class="text-slate-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-transform">→</span>
                     </a>`
                  ).join("");
                  linksContainer.innerHTML = linksHTML;
@@ -421,15 +576,15 @@
             }
         }
 
+        // Back Button
         document.getElementById('back-btn').addEventListener('click', () => {
              document.getElementById("details-container").classList.add("hidden");
              document.getElementById("intro-text").classList.remove("hidden");
         });
 
-        // Initialize
+        // Init
         window.addEventListener('resize', initChart);
-        // Delay slighty to ensure container has size
-        setTimeout(initChart, 100);
+        setTimeout(initChart, 50);
 
     </script>
 </body>
